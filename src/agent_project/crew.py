@@ -1,11 +1,22 @@
-from crewai import Agent, Crew, Process, Task
+from crewai import Agent, Crew, Process, Task, LLM
 from crewai.project import CrewBase, agent, crew, task
+from crewai_tools import SerperDevTool
+from dotenv import load_dotenv
+import os
 
 # Uncomment the following line to use an example of a custom tool
 # from agent_project.tools.custom_tool import MyCustomTool
 
 # Check our tools documentations for more information on how to use them
-# from crewai_tools import SerperDevTool
+
+load_dotenv()
+OPENAI_KEY=os.environ.get("OPENAI_API_KEY")
+SERPER_KEY=os.environ.get("SERPER_KEY")
+
+search_tool= SerperDevTool(api_key=SERPER_KEY)
+
+
+
 
 @CrewBase
 class AgentProject():
@@ -15,10 +26,9 @@ class AgentProject():
 	tasks_config = 'config/tasks.yaml'
 
 	@agent
-	def researcher(self) -> Agent:
+	def medical_keyword_extractor(self) -> Agent:
 		return Agent(
-			config=self.agents_config['researcher'],
-			# tools=[MyCustomTool()], # Example of custom tool, loaded on the beginning of file
+			config=self.agents_config['medical_keyword_extractor'],
 			verbose=True
 		)
 
@@ -28,18 +38,30 @@ class AgentProject():
 			config=self.agents_config['reporting_analyst'],
 			verbose=True
 		)
-
+  
+	@agent
+	def api_agent(self) -> Agent:
+		return Agent(
+			config=self.agents_config['api_agent'],
+			verbose=True
+		)
 	@task
-	def research_task(self) -> Task:
+	def extract_keywords_task(self) -> Task:
 		return Task(
-			config=self.tasks_config['research_task'],
+			config=self.tasks_config['extract_keywords_task'],
 		)
 
 	@task
 	def reporting_task(self) -> Task:
 		return Task(
 			config=self.tasks_config['reporting_task'],
-			output_file='report.md'
+		)
+	
+	@task
+	def api_task(self) -> Task:
+		return Task(
+			config=self.tasks_config['api_task'],
+			output_file='report.json'
 		)
 
 	@crew

@@ -1,0 +1,35 @@
+{
+  "patient_id": 12345,
+  "age": 55,
+  "gender": "Female",
+  "location": "Los Angeles, California, United States",
+  "conditions": [
+    "Hypertension",
+    "Type 2 Diabetes",
+    "Osteoarthritis"
+  ],
+  "treatments": [
+    "Metformin",
+    "Lisinopril",
+    "Ibuprofen"
+  ],
+  "surgical_history": {
+    "procedure": "Appendectomy",
+    "year": 2010,
+    "complications": "None"
+  },
+  "allergies": [
+    "Penicillin",
+    "Shellfish"
+  ],
+  "family_history": {
+    "father": "Type 2 Diabetes",
+    "mother": "Hypertension"
+  },
+  "lifestyle": {
+    "exercise": "Moderate",
+    "diet": "Low-sodium",
+    "alcohol_consumption": "Occasional",
+    "smoking": "No"
+  }
+}

@@ -1,17 +1,63 @@
-research_task:
+extract_keywords_task:
   description: >
-    Conduct a thorough research about {topic}
-    Make sure you find any interesting and relevant information given
-    the current year is 2024.
+    Analyze this medical profile: {profile}. Extract essential keywords, including gender, age, conditions, treatments, location, and any other relevant information needed to match the patient to clinical trials. Focus on structuring the extracted data to align with the requirements of clinicaltrials.gov.
   expected_output: >
-    A list with 10 bullet points of the most relevant information about {topic}
-  agent: researcher
+    A structured list of extracted keywords, categorized by relevant fields (e.g., gender, age, conditions, treatments, location) that can be directly used to search for clinical trials.
+  agent: medical_keyword_extractor
+
 
 reporting_task:
   description: >
-    Review the context you got and expand each topic into a full section for a report.
-    Make sure the report is detailed and contains any and all relevant information.
+    Review the extracted keywords from the patient's medical profile provided by the extraction agent. 
+    Format the output into a structured JSON object. The JSON should include key-value pairs where:
+      - Each key represents a category of the extracted keywords (e.g., "condition", "treatment", "age", "gender", "location").
+      - Each value contains the specific data associated with that category, formatted as a list if multiple values exist.
+    Ensure the JSON structure is clear, well-organized, and includes all relevant extracted information to support subsequent processes like API queries or patient-to-clinical-trial matching.
   expected_output: >
-    A fully fledge reports with the mains topics, each with a full section of information.
-    Formatted as markdown without '```'
+    A JSON object with key-value pairs summarizing the extracted keywords, ensuring clarity and adherence to the specified structure.
   agent: reporting_analyst
+
+api_task:
+  description: >
+    The agent must construct a query string for the ClinicalTrials.gov API using the given input keywords. The following fixed parameters must always be included:
+      - Study Status: NOT_YET_RECRUITING, RECRUITING
+      - Included Fields: NCT Number, Study Title, Study URL, Brief Summary, Primary Outcome Measures, Conditions, Interventions, Phases, Locations
+      - Output Format: CSV (must always be specified in the query string as `format=csv`)
+
+    The output query string should adhere to the API's required syntax and incorporate the following dynamic fields when provided:
+      - Conditions (`query.cond`)
+      - Interventions (`query.intr`)
+      - Age Range (`postFilter.advanced`, in Essie syntax)
+      - Geographic Location (`filter.geo`, in `distance(lat,long,distance)` format)
+
+    Few-shot prompting examples:
+      - Example 1:
+          Input Keywords:
+            Conditions: hypertension, type 2 diabetes
+            Interventions: metformin, lisinopril
+            Age: 18 years and above
+            Location: distance(34.052235,-118.243683,50mi)
+          Expected Output Query:
+            https://clinicaltrials.gov/api/v2/studies?format=csv&query.cond=hypertension+AND+%22type+2+diabetes%22&query.intr=metformin+AND+lisinopril&filter.overallStatus=NOT_YET_RECRUITING%7CRECRUITING&postFilter.advanced=AREA%5BMinimumAge%5DRANGE%5BMIN%2C+18+years%5D&filter.geo=distance(34.052235,-118.243683,50mi)&fields=NCT+Number%7CStudy+Title%7CStudy+URL%7CBrief+Summary%7CPrimary+Outcome+Measures%7CConditions%7CInterventions%7CPhases%7CLocations
+
+      - Example 2:
+          Input Keywords:
+            Conditions: lung cancer
+            Interventions: immunotherapy
+            Age: 16 years and above
+          Expected Output Query:
+            https://clinicaltrials.gov/api/v2/studies?format=csv&query.cond=lung+cancer&query.intr=immunotherapy&filter.overallStatus=NOT_YET_RECRUITING%7CRECRUITING&postFilter.advanced=AREA%5BMinimumAge%5DRANGE%5BMIN%2C+16+years%5D&fields=NCT+Number%7CStudy+Title%7CStudy+URL%7CBrief+Summary%7CPrimary+Outcome+Measures%7CConditions%7CInterventions%7CPhases%7CLocations
+
+      - Example 3:
+          Input Keywords:
+            Conditions: Alzheimer's disease
+            Interventions: cognitive behavioral therapy
+            Location: distance(40.712776,-74.005974,100mi)
+            Age: 60 years and above
+          Expected Output Query:
+            https://clinicaltrials.gov/api/v2/studies?format=csv&query.cond=%22Alzheimer%27s+disease%22&query.intr=cognitive+behavioral+therapy&filter.overallStatus=NOT_YET_RECRUITING%7CRECRUITING&postFilter.advanced=AREA%5BMinimumAge%5DRANGE%5BMIN%2C+60+years%5D&filter.geo=distance(40.712776,-74.005974,100mi)&fields=NCT+Number%7CStudy+Title%7CStudy+URL%7CBrief+Summary%7CPrimary+Outcome+Measures%7CConditions%7CInterventions%7CPhases%7CLocations
+
+  expected_output: >
+    "A fully constructed query string based on the input keywords, fixed parameters, and API syntax."
+  agent: >
+    "api_agent"
