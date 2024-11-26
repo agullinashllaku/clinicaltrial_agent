@@ -1,5 +1,5 @@
-crewai>=1.0.0
-crewai-tools>=1.0.0
-python-dotenv>=1.0.0
-streamlit>=1.15.0
-requests>=2.25.1
+crewai
+crewai-tools
+python-dotenv
+streamlit
+requests
