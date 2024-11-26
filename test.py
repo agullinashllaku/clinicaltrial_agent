@@ -1,7 +1,7 @@
 import requests
 
 # Base URL for the API
-base_url = "https://clinicaltrials.gov/api/v2/studies?format=csv&query.cond=%28head+OR+neck%29+AND+pain&filter.advanced=heart+attack+AND+SEARCH%5BLocation%5D%28AREA%5BLocationCountry%5DUnited+States+AND+AREA%5BLocationStatus%5DRecruiting%29"
+base_url = "https://clinicaltrials.gov/api/v2/studies?format=csv&query.cond=%22persistent+neck+pain%22+AND+stiffness+AND+discomfort&filter.overallStatus=NOT_YET_RECRUITING%7CRECRUITING&postFilter.advanced=AREA%5BMinimumAge%5DRANGE%5BMIN%2C+50+years%5D&fields=NCT+Number%7CStudy+Title%7CStudy+URL%7CBrief+Summary%7CPrimary+Outcome+Measures%7CConditions%7CInterventions%7CPhases%7CLocations"
 
 # Sending the GET request
 response = requests.get(base_url)

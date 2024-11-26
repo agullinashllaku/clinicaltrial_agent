@@ -2,6 +2,7 @@ from crewai import Agent, Crew, Process, Task, LLM
 from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import SerperDevTool
 from dotenv import load_dotenv
+import requests
 import os
 
 # Uncomment the following line to use an example of a custom tool
@@ -16,6 +17,33 @@ SERPER_KEY=os.environ.get("SERPER_KEY")
 search_tool= SerperDevTool(api_key=SERPER_KEY)
 
 
+def api_request(query):
+    print(query)
+    # Read the entire content of the report.txt file
+    # with open("agent_project\\report.txt", "r") as r:
+    #     query = r.read().strip()  # Read the entire file as a string
+
+    try:
+
+        response = requests.get(query)
+
+        # Handle the response, assuming it's in CSV format
+        if response.status_code == 200:
+            print("API Request Successful!")
+            with open("clinicaltrials.csv", "wb") as f:
+                f.write(response.content)  # Save the CSV response to a file
+            print("CSV saved as 'output.csv'.")
+        else:
+            print(f"API Request Failed! Status Code: {response.status_code}")
+            print(response.text)
+
+    except Exception as e:
+        print(f"An error occurred during the API request: {e}")
+
+# Call the function to test it
+
+        
+    
 
 
 @CrewBase
@@ -61,7 +89,8 @@ class AgentProject():
 	def api_task(self) -> Task:
 		return Task(
 			config=self.tasks_config['api_task'],
-			output_file='report.json'
+			output_file='report.txt',
+			callback= api_request
 		)
 
 	@crew

@@ -1,6 +1,6 @@
 extract_keywords_task:
   description: >
-    Analyze this medical profile: {profile}. Extract essential keywords, including gender, age, conditions, treatments, location, and any other relevant information needed to match the patient to clinical trials. Focus on structuring the extracted data to align with the requirements of clinicaltrials.gov.
+    Analyze this medical profile: {profile}. Extract essential keywords, including gender, age, conditions, treatments, location, and any other relevant information needed to match the patient to clinical trials. Focus on structuring the extracted data to align with the requirements of clinicaltrials.gov. Also please only extract the base words, r.g. if the patients it experiencing neck pain, discomfort and stiffness only extract neck paina s that is the basis.
   expected_output: >
     A structured list of extracted keywords, categorized by relevant fields (e.g., gender, age, conditions, treatments, location) that can be directly used to search for clinical trials.
   agent: medical_keyword_extractor
@@ -21,14 +21,17 @@ api_task:
   description: >
     The agent must construct a query string for the ClinicalTrials.gov API using the given input keywords. The following fixed parameters must always be included:
       - Study Status: NOT_YET_RECRUITING, RECRUITING
-      - Included Fields: NCT Number, Study Title, Study URL, Brief Summary, Primary Outcome Measures, Conditions, Interventions, Phases, Locations
+      - Included Fields: NCT Number,Study Title,Study URL,Brief Summary,Interventions,Conditions,Primary Outcome Measures,Secondary Outcome Measures,Other Outcome Measures,Sponsor,Sex,Age,Phases,Start Date,Completion Date,Study Type,Locations
       - Output Format: CSV (must always be specified in the query string as `format=csv`)
+    
+    Important note: All condition and treatemnt names retrieved that are capitalized, should be converted to all lowecase in the query
 
     The output query string should adhere to the API's required syntax and incorporate the following dynamic fields when provided:
       - Conditions (`query.cond`)
       - Interventions (`query.intr`)
       - Age Range (`postFilter.advanced`, in Essie syntax)
       - Geographic Location (`filter.geo`, in `distance(lat,long,distance)` format)
+      If some fields are not in the json file do not include them in the query, only include the ones that are present
 
     Few-shot prompting examples:
       - Example 1:
@@ -38,7 +41,7 @@ api_task:
             Age: 18 years and above
             Location: distance(34.052235,-118.243683,50mi)
           Expected Output Query:
-            https://clinicaltrials.gov/api/v2/studies?format=csv&query.cond=hypertension+AND+%22type+2+diabetes%22&query.intr=metformin+AND+lisinopril&filter.overallStatus=NOT_YET_RECRUITING%7CRECRUITING&postFilter.advanced=AREA%5BMinimumAge%5DRANGE%5BMIN%2C+18+years%5D&filter.geo=distance(34.052235,-118.243683,50mi)&fields=NCT+Number%7CStudy+Title%7CStudy+URL%7CBrief+Summary%7CPrimary+Outcome+Measures%7CConditions%7CInterventions%7CPhases%7CLocations
+            https://clinicaltrials.gov/api/v2/studies?format=csv&query.cond=hypertension+AND+%22type+2+diabetes%22&query.intr=metformin+AND+lisinopril&filter.overallStatus=NOT_YET_RECRUITING%7CRECRUITING&postFilter.advanced=AREA%5BMinimumAge%5DRANGE%5BMIN%2C+18+years%5D&filter.geo=distance(34.052235,-118.243683,50mi)&fields=NCT+Number%7CStudy+Title%7CStudy+URL%7CBrief+Summary%7CInterventions%7CConditions%7CPrimary+Outcome+Measures%7CSecondary+Outcome+Measures%7COther+Outcome+Measures%7CSponsor%7CSex%7CAge%7CPhases%7CStart+Date%7CCompletion+Date%7CStudy+Type%7CLocations
 
       - Example 2:
           Input Keywords:
@@ -46,7 +49,7 @@ api_task:
             Interventions: immunotherapy
             Age: 16 years and above
           Expected Output Query:
-            https://clinicaltrials.gov/api/v2/studies?format=csv&query.cond=lung+cancer&query.intr=immunotherapy&filter.overallStatus=NOT_YET_RECRUITING%7CRECRUITING&postFilter.advanced=AREA%5BMinimumAge%5DRANGE%5BMIN%2C+16+years%5D&fields=NCT+Number%7CStudy+Title%7CStudy+URL%7CBrief+Summary%7CPrimary+Outcome+Measures%7CConditions%7CInterventions%7CPhases%7CLocations
+            https://clinicaltrials.gov/api/v2/studies?format=csv&query.cond=lung+cancer&query.intr=immunotherapy&filter.overallStatus=NOT_YET_RECRUITING%7CRECRUITING&postFilter.advanced=AREA%5BMinimumAge%5DRANGE%5BMIN%2C+16+years%5D&fields=NCT+Number%7CStudy+Title%7CStudy+URL%7CBrief+Summary%7CInterventions%7CConditions%7CPrimary+Outcome+Measures%7CSecondary+Outcome+Measures%7COther+Outcome+Measures%7CSponsor%7CSex%7CAge%7CPhases%7CStart+Date%7CCompletion+Date%7CStudy+Type%7CLocations
 
       - Example 3:
           Input Keywords:
@@ -55,9 +58,8 @@ api_task:
             Location: distance(40.712776,-74.005974,100mi)
             Age: 60 years and above
           Expected Output Query:
-            https://clinicaltrials.gov/api/v2/studies?format=csv&query.cond=%22Alzheimer%27s+disease%22&query.intr=cognitive+behavioral+therapy&filter.overallStatus=NOT_YET_RECRUITING%7CRECRUITING&postFilter.advanced=AREA%5BMinimumAge%5DRANGE%5BMIN%2C+60+years%5D&filter.geo=distance(40.712776,-74.005974,100mi)&fields=NCT+Number%7CStudy+Title%7CStudy+URL%7CBrief+Summary%7CPrimary+Outcome+Measures%7CConditions%7CInterventions%7CPhases%7CLocations
+            https://clinicaltrials.gov/api/v2/studies?format=csv&query.cond=%22alzheimer%27s+disease%22&query.intr=cognitive+behavioral+therapy&filter.overallStatus=NOT_YET_RECRUITING%7CRECRUITING&postFilter.advanced=AREA%5BMinimumAge%5DRANGE%5BMIN%2C+60+years%5D&filter.geo=distance(40.712776,-74.005974,100mi)&fields=NCT+Number%7CStudy+Title%7CStudy+URL%7CBrief+Summary%7CInterventions%7CConditions%7CPrimary+Outcome+Measures%7CSecondary+Outcome+Measures%7COther+Outcome+Measures%7CSponsor%7CSex%7CAge%7CPhases%7CStart+Date%7CCompletion+Date%7CStudy+Type%7CLocations
 
   expected_output: >
-    "A fully constructed query string based on the input keywords, fixed parameters, and API syntax."
-  agent: >
-    "api_agent"
+    A fully constructed query string based on the input keywords, fixed parameters, and API syntax.
+  agent: api_agent
